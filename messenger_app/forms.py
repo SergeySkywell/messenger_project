@@ -1,5 +1,4 @@
 from django import forms
-from django.contrib.auth.models import User
 from .models import UserProfile, Chat, Message
 
 
@@ -62,6 +61,5 @@ class GroupMessageForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(GroupMessageForm, self).__init__(*args, **kwargs)
-        # Скрываем поле 'recipient' для групповых чатов
         if 'chat' in self.fields and self.instance.chat.type == 'group':
             self.fields['recipient'].widget = forms.HiddenInput()

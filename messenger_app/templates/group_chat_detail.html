@@ -91,82 +91,149 @@
         }
       });
 
-function loadPreviousMessages() {
-  var chatMessages = document.getElementById('chat-messages');
-  var chatId = '132';
-  var groupChatMessagesEndpoint = `/api/group-chats/${chatId}/?format=json`;
+      function loadPreviousMessages() {
+        var chatMessages = document.getElementById('chat-messages');
+        var chatId = '{{ group_chat.id }}';
+        var groupChatMessagesEndpoint = `/api/group-chats/${chatId}/`;
 
-  fetch(groupChatMessagesEndpoint, {
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-    },
-  })
-  .then(response => {
-    if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`);
-    }
-    return response.json();  // Теперь просто читаем тело как JSON
-  })
-    .then(previousMessages => {
-      if (previousMessages && previousMessages.length > 0) {
-        previousMessages.forEach(message => {
-          var messageDiv = document.createElement('div');
-          messageDiv.classList.add('message');
-          messageDiv.dataset.messageId = message.id;
+        fetch(groupChatMessagesEndpoint)
+          .then(response => {
+            if (!response.ok) {
+              throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+            return response.json();
+          })
+          .then(previousMessages => {
+            if (previousMessages && previousMessages.length > 0) {
+              previousMessages.forEach(message => {
+                var messageDiv = document.createElement('div');
+                messageDiv.classList.add('message');
+                messageDiv.dataset.messageId = message.id;
 
-          var avatarDiv = document.createElement('div');
-          avatarDiv.classList.add('avatar');
+                var avatarDiv = document.createElement('div');
+                avatarDiv.classList.add('avatar');
 
-          var img = document.createElement('img');
-          img.src = message.sender.avatar ? message.sender.avatar.url : '';
-          img.alt = message.sender.user.username;
+                var img = document.createElement('img');
+                img.src = message.sender.avatar ? message.sender.avatar.url : '';
+                img.alt = message.sender.user.username;
 
-          avatarDiv.appendChild(img);
-          messageDiv.appendChild(avatarDiv);
+                avatarDiv.appendChild(img);
+                messageDiv.appendChild(avatarDiv);
 
-          var messageContentDiv = document.createElement('div');
-          messageContentDiv.classList.add('message-content');
+                var messageContentDiv = document.createElement('div');
+                messageContentDiv.classList.add('message-content');
 
-          var paragraph = document.createElement('p');
-          paragraph.innerHTML = `<strong>${message.sender.user.username}:</strong> ${message.content}`;
+                var paragraph = document.createElement('p');
+                paragraph.innerHTML = `<strong>${message.sender.user.username}:</strong> ${message.content}`;
 
-          var timestampSpan = document.createElement('span');
-          timestampSpan.innerText = message.timestamp;
+                var timestampSpan = document.createElement('span');
+                timestampSpan.innerText = message.timestamp;
 
-          messageContentDiv.appendChild(paragraph);
-          messageContentDiv.appendChild(timestampSpan);
+                messageContentDiv.appendChild(paragraph);
+                messageContentDiv.appendChild(timestampSpan);
 
-          if (message.sender.id === 4) {
-            var messageActionsDiv = document.createElement('div');
-            messageActionsDiv.classList.add('message-actions');
+                if (message.sender.id === 4) {
+                  var messageActionsDiv = document.createElement('div');
+                  messageActionsDiv.classList.add('message-actions');
 
-            var editLink = document.createElement('a');
-            editLink.href = `${editMessageUrl}${message.id}/`;
-            editLink.classList.add('edit-link');
-            editLink.innerText = 'Редактировать';
+                  var editLink = document.createElement('a');
+                  editLink.href = `${editMessageUrl}${message.id}/`;
+                  editLink.classList.add('edit-link');
+                  editLink.innerText = 'Редактировать';
 
-            var deleteLink = document.createElement('a');
-            deleteLink.href = `${deleteMessageUrl}${message.id}/`;
-            deleteLink.classList.add('delete-link');
-            deleteLink.innerText = 'Удалить';
+                  var deleteLink = document.createElement('a');
+                  deleteLink.href = `${deleteMessageUrl}${message.id}/`;
+                  deleteLink.classList.add('delete-link');
+                  deleteLink.innerText = 'Удалить';
 
-            messageActionsDiv.appendChild(editLink);
-            messageActionsDiv.appendChild(deleteLink);
+                  messageActionsDiv.appendChild(editLink);
+                  messageActionsDiv.appendChild(deleteLink);
 
-            messageContentDiv.appendChild(messageActionsDiv);
-          }
+                  messageContentDiv.appendChild(messageActionsDiv);
+                }
 
-          messageDiv.appendChild(messageContentDiv);
-          chatMessages.appendChild(messageDiv);
-        });
+                messageDiv.appendChild(messageContentDiv);
+                chatMessages.appendChild(messageDiv);
+              });
+            }
+          })
+          .catch(error => console.error('Error loading previous messages:', error));
       }
-    })
-    .catch(error => console.error('Error loading previous messages:', error));
-}
 
+      loadPreviousMessages();
 
-    loadPreviousMessages();
+      // WebSocket connection
+      var chatSocket = new WebSocket(
+        'ws://' + window.location.host +
+        '/ws/chat/' + '{{ group_chat.id }}' + '/');
+
+      chatSocket.onmessage = function(event) {
+        var message = JSON.parse(event.data);
+        var messageDiv = document.createElement('div');
+        messageDiv.classList.add('message');
+        messageDiv.dataset.messageId = message.id;
+
+        var avatarDiv = document.createElement('div');
+        avatarDiv.classList.add('avatar');
+
+        var img = document.createElement('img');
+        img.src = message.sender.avatar ? message.sender.avatar.url : '';
+        img.alt = message.sender.user.username;
+
+        avatarDiv.appendChild(img);
+        messageDiv.appendChild(avatarDiv);
+
+        var messageContentDiv = document.createElement('div');
+        messageContentDiv.classList.add('message-content');
+
+        var paragraph = document.createElement('p');
+        paragraph.innerHTML = `<strong>${message.sender.user.username}:</strong> ${message.content}`;
+
+        var timestampSpan = document.createElement('span');
+        timestampSpan.innerText = message.timestamp;
+
+        messageContentDiv.appendChild(paragraph);
+        messageContentDiv.appendChild(timestampSpan);
+
+        if (message.sender.id === 4) {
+          var messageActionsDiv = document.createElement('div');
+          messageActionsDiv.classList.add('message-actions');
+
+          var editLink = document.createElement('a');
+          editLink.href = `${editMessageUrl}${message.id}/`;
+          editLink.classList.add('edit-link');
+          editLink.innerText = 'Редактировать';
+
+          var deleteLink = document.createElement('a');
+          deleteLink.href = `${deleteMessageUrl}${message.id}/`;
+          deleteLink.classList.add('delete-link');
+          deleteLink.innerText = 'Удалить';
+
+          messageActionsDiv.appendChild(editLink);
+          messageActionsDiv.appendChild(deleteLink);
+
+          messageContentDiv.appendChild(messageActionsDiv);
+        }
+
+        messageDiv.appendChild(messageContentDiv);
+        chatMessages.appendChild(messageDiv);
+      };
+
+      // Form submission
+      var messageForm = document.getElementById('message-form');
+
+      messageForm.addEventListener('submit', function(event) {
+        event.preventDefault();
+
+        var formData = new FormData(messageForm);
+        var content = formData.get('content');
+
+        chatSocket.send(JSON.stringify({
+          'content': content
+        }));
+
+        messageForm.reset();
+      });
     });
   </script>
 {% endblock %}

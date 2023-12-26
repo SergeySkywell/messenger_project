@@ -53,4 +53,4 @@ class Message(models.Model):
         return reverse('user_profile_detail', args=[str(self.id)])
 
     def __str__(self):
-        return f'{self.sender.user.username} to {self.recipient.user.username}: {self.content}'
+        return self.sender.user.username if self.sender and self.sender.user else "No User"
